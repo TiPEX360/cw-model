@@ -1,10 +1,26 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableCollection;
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableSet;
+import static java.util.Objects.requireNonNull;
+import static uk.ac.bris.cs.scotlandyard.model.Colour.BLACK;
+import static uk.ac.bris.cs.scotlandyard.model.Ticket.DOUBLE;
+import static uk.ac.bris.cs.scotlandyard.model.Ticket.SECRET;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
+import java.util.function.Consumer;
+import uk.ac.bris.cs.gamekit.graph.Edge;
+import uk.ac.bris.cs.gamekit.graph.Graph;
+import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 
 // TODO implement all methods and pass all tests
@@ -14,6 +30,8 @@ public class ScotlandYardModel implements ScotlandYardGame {
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
 			PlayerConfiguration... restOfTheDetectives) {
 		// TODO
+
+		//Constructor function. Modify as go along?
 	}
 
 	@Override
