@@ -27,10 +27,18 @@ import uk.ac.bris.cs.gamekit.graph.Graph;
 // TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame {
 
+	private List<Boolean> rounds;
+	private Graph<Integer, Transport> graph;
+	private Collection<PlayerConfiguration> players;
+
+
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
 			PlayerConfiguration... restOfTheDetectives) {
-		// TODO
+		
+		//Assign attributes and insure are not null if required
+		this.rounds = requireNonNull(rounds);
+		
 	}
 
 	@Override
