@@ -83,7 +83,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 			if(locations.contains(player.location)) {
 				throw new InvalidParameterException("Player is already at this location.");
 			}
-
+			locations.add(player.location);
 			
 			for(Ticket t : Ticket.values())  {
 				if(!player.tickets.containsKey(t)) {
