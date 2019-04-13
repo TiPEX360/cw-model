@@ -10,6 +10,8 @@ import static java.util.Objects.requireNonNull;
 import static uk.ac.bris.cs.scotlandyard.model.Colour.BLACK;
 import static uk.ac.bris.cs.scotlandyard.model.Ticket.DOUBLE;
 import static uk.ac.bris.cs.scotlandyard.model.Ticket.SECRET;
+
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,20 +20,57 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.Arrays;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
-import uk.ac.bris.cs.gamekit.graph.Graph;
+
 
 // TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame {
 
+	private List<Boolean> rounds;
+	private Graph<Integer, Transport> graph;
+	private Collection<PlayerConfiguration> players;
+
+
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
 			PlayerConfiguration... restOfTheDetectives) {
-		// TODO
+		
+		this.rounds = requireNonNull(rounds);
+		this.graph = requireNonNull(graph);
 
-		//Constructor function. Modify as go along?
+		if(mrX == null) {
+			throw new InvalidParameterException("Mrx is empty");
+		}
+
+		if(!mrX.colour.isMrX()) {
+			throw new InvalidParameterException("MrX not black.");
+		}
+		
+
+		//Make sure colours and locations are not repeated.
+		List<PlayerConfiguration> configurations = new ArrayList();
+		for(PlayerConfiguration detective : restOfTheDetectives) {
+			configurations.add(detective);
+		}
+		configurations.add(firstDetective);
+		configurations.add(mrX);
+		
+		List<Colour> colours = new ArrayList();
+		List<Integer> locations = new ArrayList();
+		for(PlayerConfiguration player : configurations) {
+			if(colours.contains(player.colour)) {
+				throw new InvalidParameterException("Player of this colour already exists.");
+			}
+			colours.add(player.colour);
+
+			if(locations.contains(player.location)) {
+				throw new InvalidParameterException("Player is already at this location.");
+			}
+			locations.add(player.location);		
+		}
 	}
 
 	@Override
