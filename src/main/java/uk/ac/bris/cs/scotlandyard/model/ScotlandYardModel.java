@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import com.google.common.collect.Sets;
+import com.google.common.collect.UnmodifiableListIterator;
+
 import java.util.Arrays;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
@@ -41,6 +45,14 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		this.rounds = requireNonNull(rounds);
 		this.graph = requireNonNull(graph);
 
+		if(this.rounds.isEmpty()) {
+			throw new IllegalArgumentException("Rounds is empty.");
+		}
+
+		if(this.graph.isEmpty()) {
+			throw new IllegalArgumentException("Graph is empty.");
+		}
+
 		if(mrX == null) {
 			throw new InvalidParameterException("Mrx is empty");
 		}
@@ -51,16 +63,18 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		
 
 		//Make sure colours and locations are not repeated.
-		List<PlayerConfiguration> configurations = new ArrayList();
+		List<PlayerConfiguration> configurations = new ArrayList<PlayerConfiguration>();
 		for(PlayerConfiguration detective : restOfTheDetectives) {
 			configurations.add(detective);
 		}
 		configurations.add(firstDetective);
 		configurations.add(mrX);
 		
-		List<Colour> colours = new ArrayList();
-		List<Integer> locations = new ArrayList();
+		Set<Colour> colours = new HashSet<Colour>();
+		Set<Integer> locations = new HashSet<Integer>();
+
 		for(PlayerConfiguration player : configurations) {
+			//All player validation
 			if(colours.contains(player.colour)) {
 				throw new InvalidParameterException("Player of this colour already exists.");
 			}
@@ -69,8 +83,25 @@ public class ScotlandYardModel implements ScotlandYardGame {
 			if(locations.contains(player.location)) {
 				throw new InvalidParameterException("Player is already at this location.");
 			}
-			locations.add(player.location);		
+
+			
+			for(Ticket t : Ticket.values())  {
+				if(!player.tickets.containsKey(t)) {
+					throw new InvalidParameterException("Player is missing ticket.");
+				}
+			}
+
+			//Detective only validation
+			if(player.colour != BLACK) {
+				if(player.tickets.getOrDefault(DOUBLE, 0) > 0) {
+					throw new InvalidParameterException("Detective contains double ticket.");
+				}
+				if(player.tickets.getOrDefault(SECRET, 0) > 0) {
+					throw new InvalidParameterException("Detective contains secret ticket.");
+				}
+			}
 		}
+		this.players = configurations;
 	}
 
 	@Override
@@ -141,14 +172,13 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public List<Boolean> getRounds() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		
+		return Collections.unmodifiableList(this.rounds);
 	}
 
 	@Override
-	public Graph<Integer, Transport> getGraph() {
-		// TODO
-		throw new RuntimeException("Implement me");
+	public ImmutableGraph<Integer, Transport> getGraph() {
+		return new ImmutableGraph<Integer, Transport>(this.graph);
 	}
 
 }
