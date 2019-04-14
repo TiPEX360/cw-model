@@ -36,7 +36,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private List<Boolean> rounds;
 	private Graph<Integer, Transport> graph;
 	private List<PlayerConfiguration> players;
-
+	private Colour currentPlayer;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -103,6 +103,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 			}
 		}
 		this.players = configurations;
+		this.currentPlayer = BLACK;
 	}
 
 	@Override
@@ -142,32 +143,20 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
-		// TODO
-
-		
-		throw new RuntimeException("Implement me");
+		return Collections.unmodifiableSet(new HashSet<Colour>());
 	}
 
 	@Override
-<<<<<<< HEAD
 	public Optional<Integer> getPlayerLocation(Colour colour) 
 	{
-		for(PlayerConfiguration player : players )
-		{
-			if(player.colour==BLACK)
-				return Optional.of(0);
-			else	
-				return Optional.of(player.location);
+		if(colour == BLACK) return Optional.of((Integer)0);
+		for(PlayerConfiguration player : players) {
+			if(colour == player.colour) {
+				return Optional.of((Integer)player.location);
+			}
 		}
-		
 		return Optional.empty();
 	}	
-=======
-	public Optional<Integer> getPlayerLocation(Colour colour) {
-		// TODO
-		return Optional.of(0);
-	}
->>>>>>> 6f85deb0313cce0f8dd876c942d27a883f1f19f2
 
 	@Override
 	public Optional<Integer> getPlayerTickets(Colour colour, Ticket ticket) 
@@ -179,15 +168,15 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	}
 
 	@Override
+	
 	public boolean isGameOver() {
 		// TODO
-		throw new RuntimeException("Implement me");
+		return false;
 	}
 
 	@Override
 	public Colour getCurrentPlayer() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return currentPlayer;
 	}
 
 	@Override
