@@ -169,8 +169,8 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	
-	public boolean isGameOver() {
-		// TODO
+	public boolean isGameOver() 
+	{
 		return false;
 	}
 
@@ -180,9 +180,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	}
 
 	@Override
-	public int getCurrentRound() {
-		// TODO
-		throw new RuntimeException("Implement me");
+	public int getCurrentRound() 
+	{
+		return NOT_STARTED;
+	
 	}
 
 	@Override
