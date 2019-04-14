@@ -35,7 +35,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	private List<Boolean> rounds;
 	private Graph<Integer, Transport> graph;
-	private Collection<PlayerConfiguration> players;
+	private List<PlayerConfiguration> players;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -54,24 +54,25 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		}
 
 		if(mrX == null) {
-			throw new InvalidParameterException("Mrx is empty");
+			throw new NullPointerException("Mrx is empty");
 		}
 
 		if(!mrX.colour.isMrX()) {
 			throw new InvalidParameterException("MrX not black.");
 		}
 		
+		List<PlayerConfiguration> configurations = new ArrayList<PlayerConfiguration>();
+		configurations.add(mrX);
+		configurations.add(firstDetective);
 
 		//Make sure colours and locations are not repeated.
-		List<PlayerConfiguration> configurations = new ArrayList<PlayerConfiguration>();
 		for(PlayerConfiguration detective : restOfTheDetectives) {
 			configurations.add(detective);
 		}
-		configurations.add(firstDetective);
-		configurations.add(mrX);
 		
 		Set<Colour> colours = new HashSet<Colour>();
 		Set<Integer> locations = new HashSet<Integer>();
+
 
 		for(PlayerConfiguration player : configurations) {
 			//All player validation
@@ -114,6 +115,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	public void unregisterSpectator(Spectator spectator) {
 		// TODO
 		throw new RuntimeException("Implement me");
+		
 	}
 
 	@Override
@@ -130,20 +132,26 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public List<Colour> getPlayers() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		List<Colour> playerColours = new ArrayList<Colour>();
+		for(PlayerConfiguration player : players) {
+			playerColours.add(player.colour);
+		}
+
+		return Collections.unmodifiableList(playerColours);
 	}
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
 		// TODO
+
+		
 		throw new RuntimeException("Implement me");
 	}
 
 	@Override
 	public Optional<Integer> getPlayerLocation(Colour colour) {
 		// TODO
-		throw new RuntimeException("Implement me");
+		return Optional.of(0);
 	}
 
 	@Override
