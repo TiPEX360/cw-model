@@ -172,7 +172,6 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public List<Boolean> getRounds() {
-		
 		return Collections.unmodifiableList(this.rounds);
 	}
 
