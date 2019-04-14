@@ -35,7 +35,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	private List<Boolean> rounds;
 	private Graph<Integer, Transport> graph;
-	private Collection<PlayerConfiguration> players;
+	private List<PlayerConfiguration> players;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -54,7 +54,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		}
 
 		if(mrX == null) {
-			throw new InvalidParameterException("Mrx is empty");
+			throw new NullPointerException("Mrx is empty");
 		}
 
 		if(!mrX.colour.isMrX()) {
@@ -141,15 +141,26 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	}
 
 	@Override
-	public Optional<Integer> getPlayerLocation(Colour colour) {
-		// TODO
-		throw new RuntimeException("Implement me");
-	}
+	public Optional<Integer> getPlayerLocation(Colour colour) 
+	{
+		for(PlayerConfiguration player : players )
+		{
+			if(player.colour==BLACK)
+				return Optional.of(0);
+			else	
+				return Optional.of(player.location);
+		}
+		
+		return Optional.empty();
+	}	
 
 	@Override
-	public Optional<Integer> getPlayerTickets(Colour colour, Ticket ticket) {
-		// TODO
-		throw new RuntimeException("Implement me");
+	public Optional<Integer> getPlayerTickets(Colour colour, Ticket ticket) 
+	{	
+		for(PlayerConfiguration player : players)
+			if(player.colour==colour)
+				return Optional.of(player.tickets.getOrDefault(ticket, 0));
+		return Optional.empty();
 	}
 
 	@Override
