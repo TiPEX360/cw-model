@@ -61,17 +61,18 @@ public class ScotlandYardModel implements ScotlandYardGame {
 			throw new InvalidParameterException("MrX not black.");
 		}
 		
+		List<PlayerConfiguration> configurations = new ArrayList<PlayerConfiguration>();
+		configurations.add(mrX);
+		configurations.add(firstDetective);
 
 		//Make sure colours and locations are not repeated.
-		List<PlayerConfiguration> configurations = new ArrayList<PlayerConfiguration>();
 		for(PlayerConfiguration detective : restOfTheDetectives) {
 			configurations.add(detective);
 		}
-		configurations.add(firstDetective);
-		configurations.add(mrX);
 		
 		Set<Colour> colours = new HashSet<Colour>();
 		Set<Integer> locations = new HashSet<Integer>();
+
 
 		for(PlayerConfiguration player : configurations) {
 			//All player validation
@@ -114,6 +115,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	public void unregisterSpectator(Spectator spectator) {
 		// TODO
 		throw new RuntimeException("Implement me");
+		
 	}
 
 	@Override
@@ -130,17 +132,24 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public List<Colour> getPlayers() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		List<Colour> playerColours = new ArrayList<Colour>();
+		for(PlayerConfiguration player : players) {
+			playerColours.add(player.colour);
+		}
+
+		return Collections.unmodifiableList(playerColours);
 	}
 
 	@Override
 	public Set<Colour> getWinningPlayers() {
 		// TODO
+
+		
 		throw new RuntimeException("Implement me");
 	}
 
 	@Override
+<<<<<<< HEAD
 	public Optional<Integer> getPlayerLocation(Colour colour) 
 	{
 		for(PlayerConfiguration player : players )
@@ -153,6 +162,12 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		
 		return Optional.empty();
 	}	
+=======
+	public Optional<Integer> getPlayerLocation(Colour colour) {
+		// TODO
+		return Optional.of(0);
+	}
+>>>>>>> 6f85deb0313cce0f8dd876c942d27a883f1f19f2
 
 	@Override
 	public Optional<Integer> getPlayerTickets(Colour colour, Ticket ticket) 
@@ -183,7 +198,6 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public List<Boolean> getRounds() {
-		
 		return Collections.unmodifiableList(this.rounds);
 	}
 
@@ -191,5 +205,4 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	public ImmutableGraph<Integer, Transport> getGraph() {
 		return new ImmutableGraph<Integer, Transport>(this.graph);
 	}
-
 }
