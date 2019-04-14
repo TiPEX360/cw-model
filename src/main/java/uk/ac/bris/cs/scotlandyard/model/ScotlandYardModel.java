@@ -187,5 +187,4 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	public ImmutableGraph<Integer, Transport> getGraph() {
 		return new ImmutableGraph<Integer, Transport>(this.graph);
 	}
-
 }
