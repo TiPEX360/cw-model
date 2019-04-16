@@ -36,7 +36,8 @@ public class ScotlandYardModel implements ScotlandYardGame {
 	private List<Boolean> rounds;
 	private Graph<Integer, Transport> graph;
 	private List<PlayerConfiguration> players;
-	private Colour currentPlayer;
+	private Integer currentPlayerIndex;
+
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -73,9 +74,9 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		Set<Colour> colours = new HashSet<Colour>();
 		Set<Integer> locations = new HashSet<Integer>();
 
-
+		int i = 0;
 		for(PlayerConfiguration player : configurations) {
-			//All player validation
+			//For all players
 			if(colours.contains(player.colour)) {
 				throw new InvalidParameterException("Player of this colour already exists.");
 			}
@@ -92,7 +93,12 @@ public class ScotlandYardModel implements ScotlandYardGame {
 				}
 			}
 
-			//Detective only validation
+			//For MrX only
+			if(player.colour == BLACK) {
+				this.currentPlayerIndex = i;
+			}
+
+			//For detectives only
 			if(player.colour != BLACK) {
 				if(player.tickets.getOrDefault(DOUBLE, 0) > 0) {
 					throw new InvalidParameterException("Detective contains double ticket.");
@@ -101,9 +107,9 @@ public class ScotlandYardModel implements ScotlandYardGame {
 					throw new InvalidParameterException("Detective contains secret ticket.");
 				}
 			}
+			i++;
 		}
 		this.players = configurations;
-		this.currentPlayer = BLACK;
 	}
 
 	@Override
@@ -121,6 +127,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public void startRotate() {
+		PlayerConfiguration current = players.get(currentPlayerIndex);
+
+		
+
 		// TODO
 		throw new RuntimeException("Implement me");
 	}
@@ -137,11 +147,9 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		for(PlayerConfiguration player : players) {
 			playerColours.add(player.colour);
 		}
-
 		return Collections.unmodifiableList(playerColours);
 	}
-
-	@Override
+	
 	public Set<Colour> getWinningPlayers() {
 		return Collections.unmodifiableSet(new HashSet<Colour>());
 	}
@@ -176,7 +184,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 
 	@Override
 	public Colour getCurrentPlayer() {
-		return currentPlayer;
+		return players.get(this.currentPlayerIndex).colour;
 	}
 
 	@Override
