@@ -31,12 +31,13 @@ import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 
 
 // TODO implement all methods and pass all tests
-public class ScotlandYardModel implements ScotlandYardGame {
+public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
-	private List<Boolean> rounds;
-	private Graph<Integer, Transport> graph;
-	private List<PlayerConfiguration> players;
-	private Integer currentPlayerIndex;
+	final private List<Boolean> rounds;
+	final private Graph<Integer, Transport> graph;
+	final private List<PlayerConfiguration> players;
+	private Set<Move> validMoves;
+	private Integer currentPlayerIndex = 0;
 
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -74,7 +75,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		Set<Colour> colours = new HashSet<Colour>();
 		Set<Integer> locations = new HashSet<Integer>();
 
-		int i = 0;
+		// int i = 0;
 		for(PlayerConfiguration player : configurations) {
 			//For all players
 			if(colours.contains(player.colour)) {
@@ -93,10 +94,10 @@ public class ScotlandYardModel implements ScotlandYardGame {
 				}
 			}
 
-			//For MrX only
-			if(player.colour == BLACK) {
-				this.currentPlayerIndex = i;
-			}
+			// //For MrX only
+			// if(player.colour == BLACK) {
+			// 	this.currentPlayerIndex = i;
+			// }
 
 			//For detectives only
 			if(player.colour != BLACK) {
@@ -107,7 +108,7 @@ public class ScotlandYardModel implements ScotlandYardGame {
 					throw new InvalidParameterException("Detective contains secret ticket.");
 				}
 			}
-			i++;
+			// i++;
 		}
 		this.players = configurations;
 	}
@@ -125,14 +126,27 @@ public class ScotlandYardModel implements ScotlandYardGame {
 		
 	}
 
+	public void accept(Move m) {
+		//if(!ValidMoves includes Move) throw exception.
+		if(m == null) {
+			throw new NullPointerException("Move is null.");
+		}
+		if(!validMoves.contains(m)) {
+			throw new IllegalArgumentException("Invalid move.");
+		}
+
+	}
+
+	private void genValidMoves() {
+		validMoves = new HashSet<Move>();
+		validMoves.add(new PassMove(BLACK));
+	}
+
 	@Override
 	public void startRotate() {
 		PlayerConfiguration current = players.get(currentPlayerIndex);
-
-		
-
-		// TODO
-		throw new RuntimeException("Implement me");
+		genValidMoves();
+		current.player.makeMove(this, current.location, validMoves, this);
 	}
 
 	@Override
