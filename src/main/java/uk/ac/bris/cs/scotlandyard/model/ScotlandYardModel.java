@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.google.common.collect.Sets;
 import com.google.common.collect.UnmodifiableListIterator;
@@ -27,6 +29,7 @@ import com.google.common.collect.UnmodifiableListIterator;
 import java.util.Arrays;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
+import uk.ac.bris.cs.gamekit.graph.Node;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 
 
@@ -36,9 +39,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	final private List<Boolean> rounds;
 	final private Graph<Integer, Transport> graph;
 	private List<ScotlandYardPlayer> players = new ArrayList<ScotlandYardPlayer>();
-	private Set<Move> validMoves;
 	private Integer currentPlayerIndex = 0;
-
+	private Set<Move> validMoves;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -121,7 +123,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	}
 
 	public void accept(Move m) {
-		//if(!ValidMoves includes Move) throw exception.
 		if(m == null) {
 			throw new NullPointerException("Move is null.");
 		}
@@ -134,26 +135,51 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		//If double move
 	}
 
-	private void genValidMoves() {
-		ScotlandYardPlayer current = players.get(currentPlayerIndex);
-		Collection<Edge<Integer, Transport>> edges = graph.getEdgesFrom(graph.getNode(current.location()));
-
-		//For each edge 
-		//	If ticket for transport exists in player
-		//		Add Corresponding node to list
+	private Set<TicketMove> genMovesFromNode(Node<Integer> n, ScotlandYardPlayer player) {
+		Collection<Edge<Integer, Transport>> edges = graph.getEdgesFrom(n);
+		Set<TicketMove> moves = new HashSet<TicketMove>();
 		for(Edge<Integer, Transport> edge : edges) {
-			
-			if(getPlayerTickets(current.colour(), Ticket.fromTransport(edge.data())).get() > 0) {
-				validMoves.add(new TicketMove(current.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()));
+			if(player.hasTickets(Ticket.fromTransport(edge.data()))) {
+				moves.add(new TicketMove(player.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()));
+			}
+			else if(player.hasTickets(SECRET)) {
+				moves.add(new TicketMove(player.colour(), SECRET, edge.destination().value()));
 			}
 		}
+
+		return moves;
+	}
+
+	private Set<Move> genValidMoves() {
+		ScotlandYardPlayer current = players.get(currentPlayerIndex);
+		Node<Integer> node = graph.getNode(current.location());
+		Set<TicketMove> singleMoves = new HashSet<TicketMove>();
+		Set<DoubleMove> doubleMoves = new HashSet<DoubleMove>();
+
+		singleMoves = genMovesFromNode(node, current);
+
+
+		
+		for (TicketMove firstMove : singleMoves) {
+			Set<TicketMove> secondMoves = new HashSet<TicketMove>();
+			current.removeTicket(firstMove.ticket());
+			current.addTicket(firstMove.ticket());
+		
+			secondMoves = genMovesFromNode(node, current);
+
+			for(TicketMove secondMove : secondMoves) {
+				doubleMoves.add(new DoubleMove(current.colour(), firstMove, secondMove));
+			}
+		}
+
+		return Sets.union(singleMoves, doubleMoves);
 	}
 
 	@Override
 	public void startRotate() {
 		ScotlandYardPlayer current = players.get(currentPlayerIndex);
-		genValidMoves();
-		current.player().makeMove(this, current.location(), validMoves, this);
+
+		current.player().makeMove(this, current.location(), genValidMoves(), this);
 	}
 
 	@Override
