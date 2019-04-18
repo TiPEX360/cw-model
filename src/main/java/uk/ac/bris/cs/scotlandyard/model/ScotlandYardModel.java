@@ -143,7 +143,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 				moves.add(new TicketMove(player.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()));
 			}
 			else if(player.hasTickets(SECRET)) {
-				moves.add(new TicketMove(player.colour(), SECRET, edge.destination().value()));
+				moves.add(new TicketMove(BLACK, SECRET, edge.destination().value()));
 			}
 		}
 
@@ -157,16 +157,12 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		Set<DoubleMove> doubleMoves = new HashSet<DoubleMove>();
 
 		singleMoves = genMovesFromNode(node, current);
-
-
-		
 		for (TicketMove firstMove : singleMoves) {
 			Set<TicketMove> secondMoves = new HashSet<TicketMove>();
 			current.removeTicket(firstMove.ticket());
-			current.addTicket(firstMove.ticket());
-		
 			secondMoves = genMovesFromNode(node, current);
-
+			current.addTicket(firstMove.ticket());
+			
 			for(TicketMove secondMove : secondMoves) {
 				doubleMoves.add(new DoubleMove(current.colour(), firstMove, secondMove));
 			}
@@ -178,8 +174,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	@Override
 	public void startRotate() {
 		ScotlandYardPlayer current = players.get(currentPlayerIndex);
-
-		current.player().makeMove(this, current.location(), genValidMoves(), this);
+		validMoves = genValidMoves();
+		System.out.println(validMoves.toString());
+		current.player().makeMove(this, current.location(), validMoves, this);
 	}
 
 	@Override
