@@ -133,12 +133,16 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		//If TicketMove
 		//If PassMove
 		//If double move
+		//if(currentPlayerIndex < (players.size() - 1)) currentPlayerIndex++;
+		//else currentPlayerIndex = 0; 
 	}
 
 	private Set<Integer> getOccupiedLocations() {
 		Set<Integer> occupied = new HashSet<Integer>();
 		for(ScotlandYardPlayer player : players) {
-			occupied.add(player.location());
+			if(!player.isMrX()) {
+				occupied.add(player.location());
+			}
 		}
 		return occupied;
 	}
@@ -156,10 +160,10 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 			//If unoccupied and has tickets, add the eddge
 			if(!occupied.contains(destination)) {
-				if(player.hasTickets(ticket, 1)) {
+				if(player.hasTickets(ticket, 1) && ticket != SECRET) {
 					moves.add(new TicketMove(player.colour(), ticket, destination));
 				}
-				if(player.hasTickets(SECRET, 1)) {
+				if(player.hasTickets(SECRET, 1) && player.isMrX()) {
 					moves.add(new TicketMove(BLACK, SECRET, destination));
 				}
 			}
@@ -177,7 +181,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 		// Generate all single moves from the player location
 		singleMoves = genMovesFromNode(firstNode, current);
-		if(singleMoves.isEmpty() && !current.isMrX()) {
+		if(singleMoves.isEmpty() && current.isDetective()) {
 			moves.add(new PassMove(current.colour()));
 		}
 		//Check conditions for double moves before generating them
@@ -197,9 +201,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 					doubleMoves.add(new DoubleMove(current.colour(), firstMove, secondMove));
 				}
 			}
+			moves.addAll(doubleMoves);
 		}
 		moves.addAll(singleMoves);
-		moves.addAll(doubleMoves);
 		// Return all single and double moves
 		return moves;
 		// return Sets.union(singleMoves, doubleMoves);
@@ -209,8 +213,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	public void startRotate() {
 		ScotlandYardPlayer current = players.get(currentPlayerIndex);
 		validMoves = genValidMoves();
-		
 		current.player().makeMove(this, current.location(), validMoves, this);
+		
 	}
 
 	@Override
