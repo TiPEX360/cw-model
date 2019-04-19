@@ -135,15 +135,33 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		//If double move
 	}
 
+	private Set<Integer> getOccupiedLocations() {
+		Set<Integer> occupied = new HashSet<Integer>();
+		for(ScotlandYardPlayer player : players) {
+			occupied.add(player.location());
+		}
+		return occupied;
+	}
+
 	private Set<TicketMove> genMovesFromNode(Node<Integer> n, ScotlandYardPlayer player) {
 		Collection<Edge<Integer, Transport>> edges = graph.getEdgesFrom(n);
 		Set<TicketMove> moves = new HashSet<TicketMove>();
+		Set<Integer> occupied = getOccupiedLocations();
+		occupied.remove(player.location());
+
+		//For all edges coming from the player node
 		for(Edge<Integer, Transport> edge : edges) {
-			if(player.hasTickets(Ticket.fromTransport(edge.data()))) {
-				moves.add(new TicketMove(player.colour(), Ticket.fromTransport(edge.data()), edge.destination().value()));
-			}
-			else if(player.hasTickets(SECRET)) {
-				moves.add(new TicketMove(BLACK, SECRET, edge.destination().value()));
+			Ticket ticket = Ticket.fromTransport(edge.data());
+			Integer destination = edge.destination().value();
+
+			//If unoccupied and has tickets, add the eddge
+			if(!occupied.contains(destination)) {
+				if(player.hasTickets(ticket, 1)) {
+					moves.add(new TicketMove(player.colour(), ticket, destination));
+				}
+				if(player.hasTickets(SECRET, 1)) {
+					moves.add(new TicketMove(BLACK, SECRET, destination));
+				}
 			}
 		}
 
@@ -152,30 +170,46 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	private Set<Move> genValidMoves() {
 		ScotlandYardPlayer current = players.get(currentPlayerIndex);
-		Node<Integer> node = graph.getNode(current.location());
+		Node<Integer> firstNode = graph.getNode(current.location());
+		Set<Move> moves = new HashSet<Move>();
 		Set<TicketMove> singleMoves = new HashSet<TicketMove>();
 		Set<DoubleMove> doubleMoves = new HashSet<DoubleMove>();
 
-		singleMoves = genMovesFromNode(node, current);
-		for (TicketMove firstMove : singleMoves) {
-			Set<TicketMove> secondMoves = new HashSet<TicketMove>();
-			current.removeTicket(firstMove.ticket());
-			secondMoves = genMovesFromNode(node, current);
-			current.addTicket(firstMove.ticket());
-			
-			for(TicketMove secondMove : secondMoves) {
-				doubleMoves.add(new DoubleMove(current.colour(), firstMove, secondMove));
+		// Generate all single moves from the player location
+		singleMoves = genMovesFromNode(firstNode, current);
+		if(singleMoves.isEmpty() && !current.isMrX()) {
+			moves.add(new PassMove(current.colour()));
+		}
+		//Check conditions for double moves before generating them
+		else if(current.isMrX() && current.hasTickets(DOUBLE) && getCurrentRound() < rounds.size() - 1) {
+			//For each single move, look for second moves which can be made
+			for (TicketMove firstMove : singleMoves) {
+				Set<TicketMove> secondMoves = new HashSet<TicketMove>();
+				Node<Integer> secondNode = graph.getNode(firstMove.destination());
+	
+				// Generate second moves from first move using new ticket count
+				current.removeTicket(firstMove.ticket());
+				secondMoves = genMovesFromNode(secondNode, current);
+				current.addTicket(firstMove.ticket());
+				
+				//Add all double moves using the first move and second moves generated
+				for(TicketMove secondMove : secondMoves) {
+					doubleMoves.add(new DoubleMove(current.colour(), firstMove, secondMove));
+				}
 			}
 		}
-
-		return Sets.union(singleMoves, doubleMoves);
+		moves.addAll(singleMoves);
+		moves.addAll(doubleMoves);
+		// Return all single and double moves
+		return moves;
+		// return Sets.union(singleMoves, doubleMoves);
 	}
 
 	@Override
 	public void startRotate() {
 		ScotlandYardPlayer current = players.get(currentPlayerIndex);
 		validMoves = genValidMoves();
-		System.out.println(validMoves.toString());
+		
 		current.player().makeMove(this, current.location(), validMoves, this);
 	}
 
