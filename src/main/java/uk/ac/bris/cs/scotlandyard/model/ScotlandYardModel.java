@@ -40,6 +40,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	final private Graph<Integer, Transport> graph;
 	private List<ScotlandYardPlayer> players = new ArrayList<ScotlandYardPlayer>();
 	private Integer currentPlayerIndex = 0;
+	private Integer currentRound = 0;
 	private Set<Move> validMoves;
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -65,6 +66,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			throw new InvalidParameterException("MrX not black.");
 		}
 		
+		currentRound = NOT_STARTED;
+
 		List<PlayerConfiguration> configurations = new ArrayList<PlayerConfiguration>();
 		configurations.add(mrX);
 		configurations.add(firstDetective);
@@ -130,15 +133,47 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			throw new IllegalArgumentException("Invalid move.");
 		}
 
-		//If TicketMove
-		//If PassMove
-		//If double move
+		ScotlandYardPlayer player = players.get(currentPlayerIndex);
+
+		if(m instanceof TicketMove) {
+			TicketMove move = (TicketMove) m;
+			player.removeTicket(move.ticket());
+			if(player.isDetective()) players.get(0).addTicket(move.ticket());
+			player.location(move.destination());
+		}
+
+		if(m instanceof DoubleMove) {
+			DoubleMove move = (DoubleMove) m;
+			player.removeTicket(move.firstMove().ticket());
+			player.removeTicket(move.secondMove().ticket());
+			player.removeTicket(DOUBLE);
+			player.location(move.finalDestination());
+			//If a reveal round, only reveal first location
+			if(rounds.get(currentRound)) {
+				//Update last mrx location
+
+				//
+			}
+		} 
+
+		//Increment the current player
+		if(currentPlayerIndex == players.size() - 1) {
+			currentPlayerIndex = 0;
+			currentRound++;
+		}
+		else currentPlayerIndex++;
+		
+		//Move next player
+		startRotate();
+		// player = players.get(currentPlayerIndex);
+		// validMoves = genValidMoves();
+		// player.player().makeMove(this, player.location(), validMoves, this);
 	}
 
 	private Set<Integer> getOccupiedLocations() {
 		Set<Integer> occupied = new HashSet<Integer>();
 		for(ScotlandYardPlayer player : players) {
-			occupied.add(player.location());
+			if(player.isDetective()) occupied.add(player.location());
 		}
 		return occupied;
 	}
@@ -267,8 +302,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	@Override
 	public int getCurrentRound() 
 	{
-		return NOT_STARTED;
-	
+		return currentRound;
 	}
 
 	@Override
