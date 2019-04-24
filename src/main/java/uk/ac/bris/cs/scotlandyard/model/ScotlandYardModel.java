@@ -36,12 +36,15 @@ import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 // TODO implement all methods and pass all tests
 public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
+	
 	final private List<Boolean> rounds;
 	final private Graph<Integer, Transport> graph;
 	private List<ScotlandYardPlayer> players = new ArrayList<ScotlandYardPlayer>();
 	private Integer currentPlayerIndex = 0;
 	private Integer currentRound = 0;
 	private Set<Move> validMoves;
+	private Integer lastMrXLocation = 0;
+	private Set<Spectator> spectators = new HashSet<Spectator>();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
 			PlayerConfiguration mrX, PlayerConfiguration firstDetective,
@@ -85,7 +88,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			if(colours.contains(config.colour)) {
 				throw new InvalidParameterException("Player of this colour already exists.");
 			}
-			colours.add(config.colour);
+			colours.add(config.colour); 
 
 			if(locations.contains(config.location)) {
 				throw new InvalidParameterException("Player is already at this location.");
@@ -114,61 +117,77 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
+		spectators.add(spectator);
 		// TODO
-		throw new RuntimeException("Implement me");
+		//throw new RuntimeException("Implement me");
 	}
 
 	@Override
 	public void unregisterSpectator(Spectator spectator) {
+		spectators.remove(spectator);
 		// TODO
-		throw new RuntimeException("Implement me");
+		//throw new RuntimeException("Implement me");
 		
 	}
 
-	public void accept(Move m) {
-		if(m == null) {
-			throw new NullPointerException("Move is null.");
+	private class PlayMoveVisitor implements MoveVisitor {
+		private ScotlandYardPlayer player;
+		
+		PlayMoveVisitor() {
+			player = players.get(currentPlayerIndex);
 		}
-		if(!validMoves.contains(m)) {
-			throw new IllegalArgumentException("Invalid move.");
-		}
-
-		ScotlandYardPlayer player = players.get(currentPlayerIndex);
-
-		if(m instanceof TicketMove) {
-			TicketMove move = (TicketMove) m;
+		
+		public void visit(TicketMove move) {
 			player.removeTicket(move.ticket());
 			if(player.isDetective()) players.get(0).addTicket(move.ticket());
 			player.location(move.destination());
 		}
 
-		if(m instanceof DoubleMove) {
-			DoubleMove move = (DoubleMove) m;
+		public void visit(DoubleMove move) {
 			player.removeTicket(move.firstMove().ticket());
 			player.removeTicket(move.secondMove().ticket());
 			player.removeTicket(DOUBLE);
 			player.location(move.finalDestination());
-			//If a reveal round, only reveal first location
-			if(rounds.get(currentRound)) {
-				//Update last mrx location
-
-				//
-			}
-		} 
-
-		//Increment the current player
-		if(currentPlayerIndex == players.size() - 1) {
-			currentPlayerIndex = 0;
-			currentRound++;
+			//if(rounds.get(currentRound)) lastMrXLocation = move.firstMove().destination();
+			if(rounds.get(currentRound)) lastMrXLocation = player.location();
 		}
-		else currentPlayerIndex++;
-		
-		//Move next player
-		startRotate();
-		// player = players.get(currentPlayerIndex);
-		// validMoves = genValidMoves();
-		// player.player().makeMove(this, player.location(), validMoves, this);
+
+		public void visit(PassMove move) {
+			//idk is anything even necessary here?
+		}
 	}
+
+	public void accept(Move move) {
+		if(move == null) {
+			throw new NullPointerException("Move is null.");
+		}
+		if(!validMoves.contains(move)) {
+			throw new IllegalArgumentException("Invalid move.");
+		}
+
+		//Do move
+		move.visit(new PlayMoveVisitor());
+		
+		//Update next player and round
+		currentPlayerIndex++;
+		if(currentPlayerIndex == players.size()) {
+			currentPlayerIndex = 0;
+		}
+		if(move.colour() == BLACK) currentRound++;
+		
+		//Notify spectators
+		for(Spectator s : spectators) {
+			//MrX just made a move
+			if(currentPlayerIndex == 1) s.onRoundStarted(this, currentRound); 
+			//Last player just made a move
+			if(currentPlayerIndex == 0) s.onRotationComplete(this);
+			s.onMoveMade(this, move);
+		}
+		if(currentPlayerIndex != 0) {
+			startRotate();
+		}
+
+}
 
 	private Set<Integer> getOccupiedLocations() {
 		Set<Integer> occupied = new HashSet<Integer>();
@@ -270,7 +289,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	@Override
 	public Optional<Integer> getPlayerLocation(Colour colour) 
 	{
-		if(colour == BLACK) return Optional.of((Integer)0);
+		if(colour == BLACK) return Optional.of(lastMrXLocation);
 		for(ScotlandYardPlayer player : players) {
 			if(colour == player.colour()) {
 				return Optional.of((Integer)player.location());
