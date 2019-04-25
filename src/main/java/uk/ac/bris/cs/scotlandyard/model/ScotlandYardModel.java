@@ -132,27 +132,36 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	private class PlayMoveVisitor implements MoveVisitor {
 		private ScotlandYardPlayer player;
-		
+		Boolean doubleMove = false;
+
 		PlayMoveVisitor() {
 			player = players.get(currentPlayerIndex);
+			currentPlayerIndex++;
+			if(currentPlayerIndex == players.size()) currentPlayerIndex = 0;
 		}
 		
 		public void visit(TicketMove move) {
 			player.removeTicket(move.ticket());
 			if(player.isDetective()) players.get(0).addTicket(move.ticket());
 			player.location(move.destination());
+			if(currentRound == rounds.size()) currentRound--;
 			if(rounds.get(currentRound) && player.isMrX()) lastMrXLocation = player.location();
 			for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
+			if(player.isMrX()) currentRound++;
 		}
 
 		public void visit(DoubleMove move) {
-			player.removeTicket(move.firstMove().ticket());
-			player.removeTicket(move.secondMove().ticket());
+			doubleMove = true;
+
 			player.removeTicket(DOUBLE);
-			player.location(move.finalDestination());
-			if(rounds.get(currentRound)) lastMrXLocation = move.firstMove().destination();
+			//for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
+			this.visit(move.firstMove());
+			for(Spectator s : spectators) s.onRoundStarted(ScotlandYardModel.this, currentRound);
+			this.visit(move.secondMove());
 			//if(rounds.get(currentRound)) lastMrXLocation = player.location();
-			//currentRound++;
+			
+			for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
+			doubleMove = false;
 		}
 
 		public void visit(PassMove move) {
@@ -172,11 +181,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		move.visit(new PlayMoveVisitor());
 		
 		//Update next player and round
-		currentPlayerIndex++;
-		if(currentPlayerIndex == players.size()) {
-			currentPlayerIndex = 0;
-		}
-		if(move.colour() == BLACK) currentRound++;
+		// currentPlayerIndex++;
+		// if(currentPlayerIndex == players.size()) {
+		// 	currentPlayerIndex = 0;
+		// }
+		
 		
 		//Notify spectators
 		for(Spectator s : spectators) {
