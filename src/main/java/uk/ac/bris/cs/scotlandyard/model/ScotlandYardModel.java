@@ -141,6 +141,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			player.removeTicket(move.ticket());
 			if(player.isDetective()) players.get(0).addTicket(move.ticket());
 			player.location(move.destination());
+			if(rounds.get(currentRound) && player.isMrX()) lastMrXLocation = player.location();
+			for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
 		}
 
 		public void visit(DoubleMove move) {
@@ -148,8 +150,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			player.removeTicket(move.secondMove().ticket());
 			player.removeTicket(DOUBLE);
 			player.location(move.finalDestination());
-			//if(rounds.get(currentRound)) lastMrXLocation = move.firstMove().destination();
-			if(rounds.get(currentRound)) lastMrXLocation = player.location();
+			if(rounds.get(currentRound)) lastMrXLocation = move.firstMove().destination();
+			//if(rounds.get(currentRound)) lastMrXLocation = player.location();
+			//currentRound++;
 		}
 
 		public void visit(PassMove move) {
@@ -181,8 +184,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			if(currentPlayerIndex == 1) s.onRoundStarted(this, currentRound); 
 			//Last player just made a move
 			if(currentPlayerIndex == 0) s.onRotationComplete(this);
-			s.onMoveMade(this, move);
+			//s.onMoveMade(this, move);
 		}
+		
 		if(currentPlayerIndex != 0) {
 			startRotate();
 		}
