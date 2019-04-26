@@ -22,14 +22,17 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import com.google.common.collect.Sets;
 import com.google.common.collect.UnmodifiableListIterator;
+
 
 import java.util.Arrays;
 import uk.ac.bris.cs.gamekit.graph.Edge;
 import uk.ac.bris.cs.gamekit.graph.Graph;
 import uk.ac.bris.cs.gamekit.graph.Node;
+import uk.ac.bris.cs.scotlandyard.ui.controller.TicketsCounter;
 import uk.ac.bris.cs.gamekit.graph.ImmutableGraph;
 
 
@@ -44,6 +47,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	private Integer currentRound = 0;
 	private Set<Move> validMoves;
 	private Integer lastMrXLocation = 0;
+	private Set<Colour> winningPlayers = new HashSet<Colour>();
 	private Set<Spectator> spectators = new HashSet<Spectator>();
 
 	public ScotlandYardModel(List<Boolean> rounds, Graph<Integer, Transport> graph,
@@ -152,8 +156,9 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 				else {
 					move = new TicketMove(move.colour(), move.ticket(), lastMrXLocation);
 				}
-				
-				if(currentRound < rounds.size()) currentRound++;
+				//Maybe remove if statement
+				//if(currentRound < rounds.size()) 
+				currentRound++;
 			}
 
 			for(Spectator s : spectators) {
@@ -161,6 +166,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 				else if(currentPlayerIndex == 0) s.onRotationComplete(ScotlandYardModel.this);
 				s.onMoveMade(ScotlandYardModel.this, move);
 			}
+			
 		}
 
 		public void visit(DoubleMove move) {
@@ -190,11 +196,20 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		}
 
 		move.visit(new PlayMoveVisitor());
+		
+		//At this time, currentPlayerIndex is the player about to move
+		//currentRound is correct.
+		//if(isGameOver()) {
+		//	for(Spectator s : spectators) {
+		//		s.onGameOver(this, getWinningPlayers());
+		//	}
+		//}
 		if(currentPlayerIndex != 0) {
 			startRotate();
 		}
 
-}
+		
+	}		
 
 	private Set<Integer> getOccupiedLocations() {
 		Set<Integer> occupied = new HashSet<Integer>();
@@ -270,8 +285,11 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	public void startRotate() {
 		ScotlandYardPlayer current = players.get(currentPlayerIndex);
 		validMoves = genValidMoves();
-		
-		current.player().makeMove(this, current.location(), validMoves, this);
+		if(isGameOver()) {
+			if(currentRound == 0) throw new IllegalStateException("Game over at start of game");
+			for(Spectator s : spectators) s.onGameOver(this, getWinningPlayers());
+		}
+		else current.player().makeMove(this, current.location(), validMoves, this);
 	}
 
 	@Override
@@ -289,7 +307,8 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	}
 	
 	public Set<Colour> getWinningPlayers() {
-		return Collections.unmodifiableSet(new HashSet<Colour>());
+		
+		return Collections.unmodifiableSet(winningPlayers);
 	}
 
 	@Override
@@ -313,9 +332,40 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 		return Optional.empty();
 	}
 
+	private Boolean gameOverReturnAndSetPlayers(Boolean MrXWins) {
+		if(MrXWins) winningPlayers.add(BLACK);
+		else {
+			for(ScotlandYardPlayer player : players) {
+				if(player.isDetective()) winningPlayers.add(player.colour());
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public boolean isGameOver() 
 	{
+		Boolean haveTickets = false;
+
+		//For all detectives
+		for(ScotlandYardPlayer player : players) {
+			//In same location as MrXtestGameOverShouldNotifyGameOverOnce
+			if(player.isDetective() && player.location() == players.get(0).location()) return gameOverReturnAndSetPlayers(false);
+			for(Ticket t : Ticket.values()) {
+				if(player.isDetective() && player.hasTickets(t, 1)) haveTickets = true;
+			}
+		}
+
+		//No detectives have any tickets left
+		if(!haveTickets) return gameOverReturnAndSetPlayers(true);
+
+		//MrX meant to move next and start a new round
+		if(currentPlayerIndex == 0) {
+			//Current round is final round
+			if(currentRound == rounds.size()) return gameOverReturnAndSetPlayers(true);
+			//MrX cannot move next round
+			if(genValidMoves().isEmpty()) return gameOverReturnAndSetPlayers(false);
+		}
 		return false;
 	}
 
