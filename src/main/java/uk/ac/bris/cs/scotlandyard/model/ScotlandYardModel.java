@@ -117,14 +117,17 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public void registerSpectator(Spectator spectator) {
-		spectators.add(spectator);
+		if(spectators.contains(requireNonNull(spectator))) throw new IllegalArgumentException("Spectator already registered");
+		else spectators.add(spectator);
 		// TODO
 		//throw new RuntimeException("Implement me");
 	}
 
 	@Override
 	public void unregisterSpectator(Spectator spectator) {
-		spectators.remove(spectator);
+
+		if(spectators.contains(requireNonNull(spectator))) spectators.remove(spectator);
+		else throw new IllegalArgumentException("Spectator is not registered");
 		// TODO
 		//throw new RuntimeException("Implement me");
 		
@@ -132,7 +135,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	private class PlayMoveVisitor implements MoveVisitor {
 		private ScotlandYardPlayer player;
-		Boolean doubleMove = false;
 
 		PlayMoveVisitor() {
 			player = players.get(currentPlayerIndex);
@@ -144,28 +146,38 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			player.removeTicket(move.ticket());
 			if(player.isDetective()) players.get(0).addTicket(move.ticket());
 			player.location(move.destination());
-			if(currentRound == rounds.size()) currentRound--;
-			if(rounds.get(currentRound) && player.isMrX()) lastMrXLocation = player.location();
-			for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
-			if(player.isMrX()) currentRound++;
+			
+			if(player.isMrX()) {
+				if(rounds.get(currentRound)) lastMrXLocation = player.location();
+				else {
+					move = new TicketMove(move.colour(), move.ticket(), lastMrXLocation);
+				}
+				
+				if(currentRound < rounds.size()) currentRound++;
+			}
+
+			for(Spectator s : spectators) {
+				if(currentPlayerIndex == 1) s.onRoundStarted(ScotlandYardModel.this, currentRound);
+				else if(currentPlayerIndex == 0) s.onRotationComplete(ScotlandYardModel.this);
+				s.onMoveMade(ScotlandYardModel.this, move);
+			}
 		}
 
 		public void visit(DoubleMove move) {
-			doubleMove = true;
-
 			player.removeTicket(DOUBLE);
-			//for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
+			//Create spoof moves for annouce
+			TicketMove fakeFirst = new TicketMove(move.colour(), move.firstMove().ticket(), lastMrXLocation);
+			if(rounds.get(currentRound)) fakeFirst = move.firstMove();
+			TicketMove fakeSecond = new TicketMove(move.colour(), move.secondMove().ticket(), fakeFirst.destination());
+			if(rounds.get(currentRound + 1)) fakeSecond = move.secondMove();
+			//Annnounce
+			for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, new DoubleMove(move.colour(), fakeFirst, fakeSecond));
 			this.visit(move.firstMove());
-			for(Spectator s : spectators) s.onRoundStarted(ScotlandYardModel.this, currentRound);
 			this.visit(move.secondMove());
-			//if(rounds.get(currentRound)) lastMrXLocation = player.location();
-			
-			for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
-			doubleMove = false;
 		}
 
 		public void visit(PassMove move) {
-			//idk is anything even necessary here?
+			for(Spectator s : spectators) s.onMoveMade(ScotlandYardModel.this, move);
 		}
 	}
 
@@ -177,25 +189,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 			throw new IllegalArgumentException("Invalid move.");
 		}
 
-		//Do move
 		move.visit(new PlayMoveVisitor());
-		
-		//Update next player and round
-		// currentPlayerIndex++;
-		// if(currentPlayerIndex == players.size()) {
-		// 	currentPlayerIndex = 0;
-		// }
-		
-		
-		//Notify spectators
-		for(Spectator s : spectators) {
-			//MrX just made a move
-			if(currentPlayerIndex == 1) s.onRoundStarted(this, currentRound); 
-			//Last player just made a move
-			if(currentPlayerIndex == 0) s.onRotationComplete(this);
-			//s.onMoveMade(this, move);
-		}
-		
 		if(currentPlayerIndex != 0) {
 			startRotate();
 		}
@@ -282,8 +276,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 
 	@Override
 	public Collection<Spectator> getSpectators() {
-		// TODO
-		throw new RuntimeException("Implement me");
+		return Collections.unmodifiableCollection(spectators);
 	}
 
 	@Override
