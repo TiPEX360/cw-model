@@ -156,15 +156,15 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 				else {
 					move = new TicketMove(move.colour(), move.ticket(), lastMrXLocation);
 				}
-				//Maybe remove if statement
-				//if(currentRound < rounds.size()) 
 				currentRound++;
 			}
 
 			for(Spectator s : spectators) {
 				if(currentPlayerIndex == 1) s.onRoundStarted(ScotlandYardModel.this, currentRound);
-				else if(currentPlayerIndex == 0) s.onRotationComplete(ScotlandYardModel.this);
 				s.onMoveMade(ScotlandYardModel.this, move);
+				if(isGameOver()) s.onGameOver(ScotlandYardModel.this, getWinningPlayers());
+				else if(currentPlayerIndex == 0) s.onRotationComplete(ScotlandYardModel.this);
+				
 			}
 			
 		}
@@ -284,14 +284,15 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	@Override
 	public void startRotate() {
 		ScotlandYardPlayer current = players.get(currentPlayerIndex);
-		validMoves = genValidMoves();
 		if(isGameOver()) {
 			if(currentRound == 0) throw new IllegalStateException("Game over at start of game");
-			for(Spectator s : spectators) s.onGameOver(this, getWinningPlayers());
+			//for(Spectator s : spectators) s.onGameOver(this, getWinningPlayers());
 		}
-		else current.player().makeMove(this, current.location(), validMoves, this);
+		else {
+			validMoves = genValidMoves();
+			current.player().makeMove(this, current.location(), validMoves, this);
+		}
 	}
-
 	@Override
 	public Collection<Spectator> getSpectators() {
 		return Collections.unmodifiableCollection(spectators);
@@ -333,6 +334,7 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 	}
 
 	private Boolean gameOverReturnAndSetPlayers(Boolean MrXWins) {
+		winningPlayers = new HashSet<Colour>();
 		if(MrXWins) winningPlayers.add(BLACK);
 		else {
 			for(ScotlandYardPlayer player : players) {
