@@ -168,28 +168,6 @@ public class ScotlandYardModel implements ScotlandYardGame, Consumer<Move> {
 				
 			}
 
-			// for(Spectator s : spectators) {
-			// 	if(currentPlayerIndex == 1) s.onRoundStarted(ScotlandYardModel.this, currentRound);
-			// }
-			// isGameOver();
-			// for(Spectator s : spectators) {
-			// 	s.onMoveMade(ScotlandYardModel.this, move);
-			// }
-			// //Consider announce inside this function
-			// Boolean over = isGameOver();
-			// if(over) {
-			// 	Set<Colour> winning = getWinningPlayers();
-			// 	for(Spectator s : spectators) {
-			// 		s.onGameOver(ScotlandYardModel.this, winning);
-			// 	}
-			// }
-			// else if(currentPlayerIndex == 0) {
-			// 	for(Spectator s : spectators) {
-			// 		s.onRotationComplete(ScotlandYardModel.this);
-			// 	}
-				
-			// }
-
 		}
 
 		public void visit(DoubleMove move) {
